@@ -56,10 +56,4 @@ To run it locally, download `index.html` and open it in any modern browser.
 
 ---
 
-## License
-
-Add your preferred license here (MIT is a common choice for small utility projects like this).
-
----
-
 *Built to save NUB students the hassle of formatting cover pages by hand.*
