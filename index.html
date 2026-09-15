@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NUB Cover Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root{
+    --navy:#0F2545;
+    --navy-2:#173463;
+    --green:#1F7A45;
+    --paper:#FDFCF9;
+    --canvas:#EEF1F6;
+    --ink:#151A23;
+    --muted:#5B6472;
+    --line:#D7DCE4;
+    --accent-line:#C9A24B;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Space Grotesk', sans-serif;
+    background:var(--canvas);
+    color:var(--ink);
+    min-height:100vh;
+  }
+  a{color:inherit;}
+
+  /* ---------- Top bar ---------- */
+  .topbar{
+    background:var(--navy);
+    color:#fff;
+    padding:18px 28px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    border-bottom:3px solid var(--accent-line);
+  }
+  .brand{
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+  }
+  .brand .mark{
+    width:10px;height:10px;background:var(--green);
+    display:inline-block;border-radius:1px;
+  }
+  .brand h1{
+    font-size:17px;
+    font-weight:600;
+    margin:0;
+    letter-spacing:0.2px;
+  }
+  .brand span{
+    font-size:12.5px;
+    color:#B9C4D6;
+  }
+  .topbar-actions{
+    display:flex;gap:8px;
+  }
+  .tab-toggle{
+    display:none;
+    background:rgba(255,255,255,0.08);
+    border:1px solid rgba(255,255,255,0.18);
+    border-radius:8px;
+    padding:4px;
+    gap:2px;
+  }
+  .tab-toggle button{
+    background:transparent;
+    border:none;
+    color:#B9C4D6;
+    font-family:inherit;
+    font-size:13px;
+    padding:7px 14px;
+    border-radius:6px;
+    cursor:pointer;
+  }
+  .tab-toggle button.active{
+    background:#fff;
+    color:var(--navy);
+    font-weight:600;
+  }
+
+  /* ---------- Layout ---------- */
+  .layout{
+    display:grid;
+    grid-template-columns:400px 1fr;
+    gap:0;
+    align-items:start;
+  }
+  .panel{
+    padding:28px;
+  }
+  .form-panel{
+    background:var(--paper);
+    border-right:1px solid var(--line);
+    min-height:calc(100vh - 62px);
+    position:sticky;
+    top:0;
+    overflow-y:auto;
+    max-height:100vh;
+  }
+  .preview-panel{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:40px 28px;
+  }
+
+  h2.section-title{
+    font-size:11.5px;
+    font-weight:600;
+    color:var(--green);
+    text-transform:uppercase;
+    letter-spacing:1.1px;
+    margin:26px 0 12px;
+    padding-bottom:6px;
+    border-bottom:1px solid var(--line);
+  }
+  h2.section-title:first-of-type{margin-top:0;}
+
+  .field{margin-bottom:12px;}
+  .field label{
+    display:block;
+    font-size:12.5px;
+    color:var(--muted);
+    margin-bottom:5px;
+  }
+  .field input, .field select{
+    width:100%;
+    padding:9px 11px;
+    font-family:inherit;
+    font-size:13.5px;
+    border:1px solid var(--line);
+    border-radius:6px;
+    background:#fff;
+    color:var(--ink);
+  }
+  .field input:focus, .field select:focus{
+    outline:none;
+    border-color:var(--navy-2);
+    box-shadow:0 0 0 3px rgba(23,52,99,0.12);
+  }
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+  .logo-drop{
+    border:1.5px dashed var(--line);
+    border-radius:8px;
+    padding:14px;
+    text-align:center;
+    font-size:12.5px;
+    color:var(--muted);
+    cursor:pointer;
+    background:#fff;
+  }
+  .logo-drop img{max-height:44px;margin-bottom:6px;}
+  .logo-drop input{display:none;}
+  .logo-drop small{display:block;margin-top:4px;color:#8892A0;}
+  .clear-logo{
+    font-size:11.5px;color:var(--muted);text-decoration:underline;
+    cursor:pointer;margin-top:6px;display:inline-block;
+  }
+
+  .actions{
+    margin-top:26px;
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .btn{
+    font-family:inherit;
+    font-size:13px;
+    font-weight:600;
+    padding:11px 16px;
+    border-radius:7px;
+    border:none;
+    cursor:pointer;
+    flex:1;
+    min-width:140px;
+  }
+  .btn-primary{background:var(--navy); color:#fff;}
+  .btn-primary:hover{background:var(--navy-2);}
+  .btn-secondary{background:#fff;color:var(--navy);border:1px solid var(--line);}
+  .btn-secondary:hover{border-color:var(--navy-2);}
+  .btn-ghost{background:transparent;color:var(--muted);border:1px dashed var(--line);}
+
+  /* ---------- A4 preview ---------- */
+  .page-shell{
+    background:#fff;
+    box-shadow:0 2px 4px rgba(15,37,69,0.06), 0 18px 40px rgba(15,37,69,0.14);
+    width:100%;
+    max-width:620px;
+  }
+  #cover{
+    aspect-ratio:210/297;
+    width:100%;
+    background:var(--paper);
+    padding:9% 10% 8%;
+    display:flex;
+    flex-direction:column;
+    font-family:'Source Serif 4', serif;
+    color:var(--ink);
+    position:relative;
+  }
+  #cover::before{
+    content:'';
+    position:absolute;
+    inset:5% 5%;
+    border:1.4px solid var(--navy);
+    pointer-events:none;
+  }
+  #cover::after{
+    content:'';
+    position:absolute;
+    inset:calc(5% + 5px) calc(5% + 5px);
+    border:0.6px solid var(--accent-line);
+    pointer-events:none;
+  }
+  .c-inner{
+    position:relative;
+    z-index:1;
+    display:flex;
+    flex-direction:column;
+    height:100%;
+  }
+  .c-crest{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    text-align:center;
+    margin-bottom:6%;
+  }
+  .c-crest img{
+    max-height:76px;
+    max-width:76px;
+    object-fit:contain;
+    margin-bottom:10px;
+  }
+  .c-crest .uni-name{
+    font-size:19px;
+    font-weight:700;
+    letter-spacing:0.4px;
+    color:var(--navy);
+    line-height:1.15;
+  }
+  .c-crest .uni-tag{
+    font-size:9.5px;
+    color:var(--green);
+    letter-spacing:1.6px;
+    margin-top:4px;
+    font-family:'Space Grotesk',sans-serif;
+    text-transform:uppercase;
+  }
+  .c-doctype{
+    text-align:center;
+    margin:5% 0 4%;
+  }
+  .c-doctype .kind{
+    font-size:9.5px;
+    letter-spacing:2px;
+    color:var(--muted);
+    text-transform:uppercase;
+    font-family:'Space Grotesk',sans-serif;
+  }
+  .c-doctype .title{
+    font-size:22px;
+    font-weight:700;
+    color:var(--ink);
+    margin-top:6px;
+    line-height:1.3;
+  }
+  .c-doctype .topic{
+    font-size:14px;
+    margin-top:8px;
+    color:var(--navy-2);
+    font-style:italic;
+  }
+  .c-meta{
+    font-size:11px;
+    text-align:center;
+    color:var(--muted);
+    margin-top:3%;
+    font-family:'Space Grotesk',sans-serif;
+  }
+  .c-people{
+    margin-top:auto;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:18px;
+    font-size:10.5px;
+    padding-top:6%;
+  }
+  .c-people .label{
+    font-size:9px;
+    letter-spacing:1.4px;
+    text-transform:uppercase;
+    color:var(--green);
+    font-family:'Space Grotesk',sans-serif;
+    margin-bottom:6px;
+  }
+  .c-people .name{font-weight:700;font-size:12px;color:var(--ink);}
+  .c-people .line{margin-top:2px;color:var(--muted);}
+  .c-submission{
+    margin-top:5%;
+    text-align:center;
+    font-size:10px;
+    color:var(--muted);
+    font-family:'Space Grotesk',sans-serif;
+    border-top:0.6px solid var(--line);
+    padding-top:8px;
+  }
+
+  footer.credit{
+    text-align:center;
+    font-size:11.5px;
+    color:var(--muted);
+    margin-top:20px;
+  }
+
+  /* ---------- Responsive / mobile tabs ---------- */
+  @media (max-width:880px){
+    .layout{grid-template-columns:1fr;}
+    .form-panel{position:static;max-height:none;border-right:none;border-bottom:1px solid var(--line);}
+    .tab-toggle{display:flex;}
+    .panel.hide{display:none;}
+  }
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="brand">
+      <span class="mark"></span>
+      <h1>Cover Generator</h1>
+      <span>Northern University Bangladesh</span>
+    </div>
+    <div class="tab-toggle" id="tabToggle">
+      <button class="active" data-tab="form">Edit details</button>
+      <button data-tab="preview">Preview</button>
+    </div>
+  </div>
+
+  <div class="layout">
+
+    <!-- FORM -->
+    <div class="panel form-panel" id="formPanel">
+
+      <h2 class="section-title">Logo</h2>
+      <div class="field">
+        <label class="logo-drop" id="logoDrop">
+          <div id="logoDropInner">Click to upload your department / university logo (PNG, transparent background works best)</div>
+          <input type="file" id="logoInput" accept="image/*">
+        </label>
+        <span class="clear-logo" id="clearLogo" style="display:none;">Remove logo</span>
+      </div>
+
+      <h2 class="section-title">Document</h2>
+      <div class="field">
+        <label for="docKind">Document type</label>
+        <select id="docKind">
+          <option value="ASSIGNMENT ON">Assignment</option>
+          <option value="LAB REPORT ON">Lab Report</option>
+          <option value="TERM PAPER ON">Term Paper</option>
+          <option value="PROJECT REPORT ON">Project Report</option>
+          <option value="CASE STUDY ON">Case Study</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="topic">Topic / title</label>
+        <input id="topic" type="text" placeholder="e.g. Study & Verification of Ohm's Law">
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label for="courseTitle">Course title</label>
+          <input id="courseTitle" type="text" placeholder="e.g. Circuit Analysis Lab">
+        </div>
+        <div class="field">
+          <label for="courseCode">Course code</label>
+          <input id="courseCode" type="text" placeholder="e.g. CSE 1259">
+        </div>
+      </div>
+      <div class="field">
+        <label for="expDate">Date of experiment / class (optional)</label>
+        <input id="expDate" type="text" placeholder="e.g. 16/06/2026">
+      </div>
+
+      <h2 class="section-title">Submitted to</h2>
+      <div class="field">
+        <label for="toName">Name</label>
+        <input id="toName" type="text" placeholder="e.g. Airin Akter Tania">
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label for="toDesig">Designation</label>
+          <input id="toDesig" type="text" placeholder="e.g. Lecturer">
+        </div>
+        <div class="field">
+          <label for="toDept">Department</label>
+          <input id="toDept" type="text" placeholder="e.g. CSE">
+        </div>
+      </div>
+      <div class="field">
+        <label for="toUni">University</label>
+        <input id="toUni" type="text" value="Northern University Bangladesh">
+      </div>
+
+      <h2 class="section-title">Submitted by</h2>
+      <div class="field">
+        <label for="byName">Name</label>
+        <input id="byName" type="text" placeholder="e.g. Arman Bin Alauddin">
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label for="byId">Student ID</label>
+          <input id="byId" type="text" placeholder="e.g. 41240202189">
+        </div>
+        <div class="field">
+          <label for="bySection">Section</label>
+          <input id="bySection" type="text" placeholder="e.g. 3B">
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label for="byProgram">Program</label>
+          <input id="byProgram" type="text" placeholder="e.g. CSE">
+        </div>
+        <div class="field">
+          <label for="byDept">Department</label>
+          <input id="byDept" type="text" placeholder="e.g. CSE">
+        </div>
+      </div>
+
+      <h2 class="section-title">Submission</h2>
+      <div class="field">
+        <label for="subDate">Date of submission</label>
+        <input id="subDate" type="text" placeholder="e.g. 20/06/2026">
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-primary" id="downloadPdf">Download PDF</button>
+        <button class="btn btn-secondary" id="downloadPng">Download PNG</button>
+        <button class="btn btn-ghost" id="resetForm">Reset</button>
+      </div>
+    </div>
+
+    <!-- PREVIEW -->
+    <div class="panel preview-panel hide" id="previewPanel">
+      <div class="page-shell">
+        <div id="cover">
+          <div class="c-inner">
+            <div class="c-crest">
+              <img id="logoImg" style="display:none;">
+              <div class="uni-name">Northern University Bangladesh</div>
+              <div class="uni-tag">Department of CSE</div>
+            </div>
+
+            <div class="c-doctype">
+              <div class="kind" id="outKind">Assignment</div>
+              <div class="title" id="outDocKind">ASSIGNMENT ON</div>
+              <div class="topic" id="outTopic">Enter a topic to see it here</div>
+            </div>
+
+            <div class="c-meta" id="outMeta"></div>
+
+            <div class="c-people">
+              <div>
+                <div class="label">Submitted to</div>
+                <div class="name" id="outToName">&nbsp;</div>
+                <div class="line" id="outToDesig"></div>
+                <div class="line" id="outToDept"></div>
+                <div class="line" id="outToUni"></div>
+              </div>
+              <div>
+                <div class="label">Submitted by</div>
+                <div class="name" id="outByName">&nbsp;</div>
+                <div class="line" id="outById"></div>
+                <div class="line" id="outBySection"></div>
+                <div class="line" id="outByProgram"></div>
+              </div>
+            </div>
+
+            <div class="c-submission" id="outSubDate"></div>
+          </div>
+        </div>
+      </div>
+      <footer class="credit">Live preview &mdash; updates as you type. A4 portrait.</footer>
+    </div>
+
+  </div>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+
+  const fields = ['docKind','topic','courseTitle','courseCode','expDate',
+    'toName','toDesig','toDept','toUni','byName','byId','bySection','byProgram','byDept','subDate'];
+
+  const KIND_LABEL = {
+    'ASSIGNMENT ON':'Assignment',
+    'LAB REPORT ON':'Lab Report',
+    'TERM PAPER ON':'Term Paper',
+    'PROJECT REPORT ON':'Project Report',
+    'CASE STUDY ON':'Case Study'
+  };
+
+  function render(){
+    const v = id => $(id).value.trim();
+
+    $('outDocKind').textContent = v('docKind') || 'ASSIGNMENT ON';
+    $('outKind').textContent = KIND_LABEL[v('docKind')] || 'Assignment';
+    $('outTopic').textContent = v('topic') || 'Enter a topic to see it here';
+
+    const metaParts = [];
+    if (v('courseTitle')) metaParts.push(v('courseTitle'));
+    if (v('courseCode')) metaParts.push(v('courseCode'));
+    let metaLine = metaParts.join(' &middot; ');
+    if (v('expDate')) metaLine += (metaLine ? '<br>' : '') + 'Date: ' + v('expDate');
+    $('outMeta').innerHTML = metaLine;
+
+    $('outToName').textContent = v('toName') || '—';
+    $('outToDesig').textContent = v('toDesig');
+    $('outToDept').textContent = v('toDept') ? 'Department of ' + v('toDept') : '';
+    $('outToUni').textContent = v('toUni');
+
+    $('outByName').textContent = v('byName') || '—';
+    $('outById').textContent = v('byId') ? 'ID: ' + v('byId') : '';
+    $('outBySection').textContent = [v('bySection') ? 'Section: '+v('bySection'):'', v('byProgram') ? 'Program: '+v('byProgram'):''].filter(Boolean).join(' | ');
+    $('outByProgram').textContent = v('byDept') ? 'Department of ' + v('byDept') : '';
+
+    $('outSubDate').textContent = v('subDate') ? 'Date of Submission: ' + v('subDate') : '';
+  }
+
+  fields.forEach(id => $(id).addEventListener('input', render));
+  render();
+
+  // Logo upload
+  const logoInput = $('logoInput');
+  const logoImg = $('logoImg');
+  const logoDropInner = $('logoDropInner');
+  const clearLogo = $('clearLogo');
+
+  logoInput.addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      logoImg.src = ev.target.result;
+      logoImg.style.display = 'block';
+      logoDropInner.textContent = file.name + ' — click to change';
+      clearLogo.style.display = 'inline-block';
+    };
+    reader.readAsDataURL(file);
+  });
+
+  clearLogo.addEventListener('click', e => {
+    e.preventDefault();
+    logoImg.src = '';
+    logoImg.style.display = 'none';
+    logoInput.value = '';
+    logoDropInner.textContent = 'Click to upload your department / university logo (PNG, transparent background works best)';
+    clearLogo.style.display = 'none';
+  });
+
+  // Reset
+  $('resetForm').addEventListener('click', () => {
+    fields.forEach(id => { if (id !== 'toUni') $(id).value=''; });
+    $('toUni').value = 'Northern University Bangladesh';
+    $('docKind').value = 'ASSIGNMENT ON';
+    clearLogo.click();
+    render();
+  });
+
+  // Mobile tabs
+  const tabToggle = $('tabToggle');
+  const formPanel = $('formPanel');
+  const previewPanel = $('previewPanel');
+  tabToggle.addEventListener('click', e => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    tabToggle.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    if (btn.dataset.tab === 'form'){
+      formPanel.classList.remove('hide');
+      previewPanel.classList.add('hide');
+    } else {
+      formPanel.classList.add('hide');
+      previewPanel.classList.remove('hide');
+    }
+  });
+
+  // Downloads
+  async function captureCanvas(){
+    return await html2canvas($('cover'), { scale: 3, useCORS: true, backgroundColor: '#ffffff' });
+  }
+
+  $('downloadPng').addEventListener('click', async () => {
+    const canvas = await captureCanvas();
+    const link = document.createElement('a');
+    link.download = 'cover-page.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  });
+
+  $('downloadPdf').addEventListener('click', async () => {
+    const canvas = await captureCanvas();
+    const imgData = canvas.toDataURL('image/png');
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pageWidth = 210, pageHeight = 297;
+    pdf.addImage(imgData, 'PNG', 0, 0, pageWidth, pageHeight);
+    pdf.save('cover-page.pdf');
+  });
+
+})();
+</script>
+</body>
+</html>
